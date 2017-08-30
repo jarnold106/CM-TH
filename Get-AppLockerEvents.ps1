@@ -58,7 +58,7 @@ FUNCTION Get-AppLockerEvents {
             {
                 # Internal Fields
                 [String] $Computer
-                [String] $DateScanned
+                [DateTime] $DateScanned
 
                 # Base Event fields
                 [String] $Message
@@ -77,7 +77,7 @@ FUNCTION Get-AppLockerEvents {
                 [String] $ThreadId
                 [String] $MachineName
                 [String] $UserId
-                [String] $TimeCreated
+                [DateTime] $TimeCreated
                 [String] $ActivityId
                 [String] $RelatedActivityId
                 [String] $ContainerLog
