@@ -19,8 +19,11 @@ FUNCTION Get-AppLockerEvents {
         Get-Content C:\hosts.csv | Get-AppLockerEvents
         Get-ADComputer -filter * | Select -ExpandProperty Name | Get-AppLockerEvents
 
-    .Notes 
-        Updated: 2017-08-30
+    .Notes
+        To extract XML data, use another script like Get-WinEventXMLData
+            https://github.com/TonyPhipps/CM-TH/blob/master/Get-WinEventXMLData.ps1
+     
+        Updated: 2017-08-31
         LEGAL: Copyright (C) 2017  Anthony Phipps
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
@@ -54,119 +57,25 @@ FUNCTION Get-AppLockerEvents {
 
             $total = 0;
 
-            class Event
-            {
-                # Internal Fields
-                [String] $Computer
-                [DateTime] $DateScanned
-
-                # Base Event fields
-                [String] $Message
-                [String] $Id
-                [String] $Version
-                [String] $Qualifiers
-                [String] $Level
-                [String] $Task
-                [String] $Opcode
-                [String] $Keywords
-                [String] $RecordId
-                [String] $ProviderName
-                [String] $ProviderId
-                [String] $LogName
-                [String] $ProcessId
-                [String] $ThreadId
-                [String] $MachineName
-                [String] $UserId
-                [DateTime] $TimeCreated
-                [String] $ActivityId
-                [String] $RelatedActivityId
-                [String] $ContainerLog
-                [String] $LevelDisplayName
-                [String] $OpcodeDisplayName
-                [String] $TaskDisplayName
-
-                # AppLocker log fields
-                [String] $PolicyNameLength
-                [String] $PolicyNameBuffer
-                [String] $RuleId
-                [String] $RuleNameLength
-                [String] $RuleNameBuffer
-                [String] $RuleSddlLength
-                [String] $RuleSddlBuffer
-                [String] $TargetUser
-                [String] $TargetProcessId
-                [String] $FilePathLength
-                [String] $FilePathBuffer
-                [String] $FileHashLength
-                [String] $FileHash
-                [String] $FqbnLength
-                [String] $Fqbn
-                [String] $TargetLogonId
-            }
-	    }
+	    };
 
     PROCESS{
             
-            $Computer = $Computer.Replace('"', '');  # get rid of quotes, if present
+        $Computer = $Computer.Replace('"', '');  # get rid of quotes, if present
             
 
-            $Events = Get-WinEvent -ComputerName $Computer -FilterHashTable @{LogName="Microsoft-Windows-AppLocker/EXE and DLL"; ID="8002","8003","8004"}
+        $Events = Get-WinEvent -ComputerName $Computer -FilterHashTable @{LogName="Microsoft-Windows-AppLocker/EXE and DLL"; ID="8002","8003","8004"}
 
-            $Events |
-                Foreach-Object {
-                    $output = $null;
-                    $output = [Event]::new();
+        $Events |
+            Foreach-Object {
 
-                    $EventXML = [xml]$_.ToXml();
+                $output = $_;
+                $output | Add-Member –MemberType NoteProperty –Name Computer -Value $Computer;
+                $output | Add-Member –MemberType NoteProperty –Name DateScanned -Value (Get-Date -Format u);
 
-                    $output.Computer = $Computer;
-                    $output.DateScanned = Get-Date -Format u;
-
-                    $output.Message = $_.Message;
-                    $output.Id = $_.Id;
-                    $output.Version = $_.Version;
-                    $output.Qualifiers = $_.Qualifiers;
-                    $output.Level = $_.Level;
-                    $output.Task = $_.Task;
-                    $output.Opcode = $_.Opcode;
-                    $output.Keywords = $_.Keywords;
-                    $output.RecordId = $_.RecordId;
-                    $output.ProviderName = $_.ProviderName;
-                    $output.ProviderId = $_.ProviderId;
-                    $output.LogName = $_.LogName;
-                    $output.ProcessId = $_.ProcessId;
-                    $output.ThreadId = $_.ThreadId;
-                    $output.MachineName = $_.MachineName;
-                    $output.UserId = $_.UserId;
-                    $output.TimeCreated = $_.TimeCreated;
-                    $output.ActivityId = $_.ActivityId;
-                    $output.RelatedActivityId = $_.RelatedActivityId;
-                    $output.ContainerLog = $_.ContainerLog;
-                    $output.LevelDisplayName = $_.LevelDisplayName;
-                    $output.OpcodeDisplayName = $_.OpcodeDisplayName;
-                    $output.TaskDisplayName = $_.TaskDisplayName;
-
-                    # AppLocker fields
-                    $output.PolicyNameLength = $EventXML.Event.UserData.RuleAndFileData.PolicyNameLength;
-                    $output.PolicyNameBuffer = $EventXML.Event.UserData.RuleAndFileData.PolicyNameBuffer;
-                    $output.RuleId = $EventXML.Event.UserData.RuleAndFileData.RuleId;
-                    $output.RuleNameLength = $EventXML.Event.UserData.RuleAndFileData.RuleNameLength;
-                    $output.RuleNameBuffer = $EventXML.Event.UserData.RuleAndFileData.RuleNameBuffer;
-                    $output.RuleSddlLength = $EventXML.Event.UserData.RuleAndFileData.RuleSddlLength;
-                    $output.RuleSddlBuffer = $EventXML.Event.UserData.RuleAndFileData.RuleSddlBuffer;
-                    $output.TargetUser = $EventXML.Event.UserData.RuleAndFileData.TargetUser;
-                    $output.TargetProcessId = $EventXML.Event.UserData.RuleAndFileData.TargetProcessId;
-                    $output.FilePathLength = $EventXML.Event.UserData.RuleAndFileData.FilePathLength;
-                    $output.FilePathBuffer = $EventXML.Event.UserData.RuleAndFileData.FilePathBuffer;
-                    $output.FileHashLength = $EventXML.Event.UserData.RuleAndFileData.FileHashLength;
-                    $output.FileHash = $EventXML.Event.UserData.RuleAndFileData.FileHash;
-                    $output.FqbnLength = $EventXML.Event.UserData.RuleAndFileData.FqbnLength;
-                    $output.Fqbn = $EventXML.Event.UserData.RuleAndFileData.Fqbn;
-                    $output.TargetLogonId = $EventXML.Event.UserData.RuleAndFileData.TargetLogonId;
-
-                    Return $output;
-               }
-        }
+                Return $output;
+            };
+    };
 
     END{
         $elapsed = $stopwatch.Elapsed;
