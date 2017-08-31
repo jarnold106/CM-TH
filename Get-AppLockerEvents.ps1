@@ -15,7 +15,7 @@ FUNCTION Get-AppLockerEvents {
     .Example 
         Get-AppLockerEvents
         Get-AppLockerEvents SomeHostName.domain.com
-        Get-AppLockerEvents| Select-Object Fqbn
+        Get-AppLockerEvents | Get-WinEventXMLData
         Get-Content C:\hosts.csv | Get-AppLockerEvents
         Get-ADComputer -filter * | Select -ExpandProperty Name | Get-AppLockerEvents
 
@@ -43,6 +43,9 @@ FUNCTION Get-AppLockerEvents {
     	    [Parameter(ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True)]
             $Computer = $env:COMPUTERNAME,
             [Parameter()]
+            [Switch]
+            $WEC,
+            [Parameter()]
             $Fails
 
         );
@@ -63,8 +66,13 @@ FUNCTION Get-AppLockerEvents {
             
         $Computer = $Computer.Replace('"', '');  # get rid of quotes, if present
             
+        if ($WEC){
+            $Events = Get-WinEvent -ComputerName $Computer -FilterHashTable @{LogName="ForwardedEvents"; ID="8002","8003","8004"};
+        }
+        else {
+            $Events = Get-WinEvent -ComputerName $Computer -FilterHashTable @{LogName="Microsoft-Windows-AppLocker/EXE and DLL"; ID="8002","8003","8004"};
+        };
 
-        $Events = Get-WinEvent -ComputerName $Computer -FilterHashTable @{LogName="Microsoft-Windows-AppLocker/EXE and DLL"; ID="8002","8003","8004"}
 
         $Events |
             Foreach-Object {
