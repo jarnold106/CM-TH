@@ -12,6 +12,9 @@ FUNCTION Get-AppLockerEvents {
     .Parameter Fails  
         Provide a path to save failed systems to.
 
+    .Parameter WEC
+        Identify the destination host is a Windows Event Collector. This changes where to pull events from (ForwardedEvents).
+
     .Example 
         Get-AppLockerEvents
         Get-AppLockerEvents SomeHostName.domain.com
